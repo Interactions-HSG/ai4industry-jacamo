@@ -8,6 +8,7 @@ import java.util.Optional;
 import cartago.Artifact;
 import cartago.OPERATION;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
@@ -101,11 +102,11 @@ public class ThingArtifact extends Artifact {
    * @param url A URL that dereferences to a W3C WoT Thing Description.
    */
   public void init(String url) {
-    this.td = TDGraphReader.readFromString(test_td);
+    this.td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, test_td);
     
     // TODO: To dereference the url provided as a parameter, use the follwing codeinstead:
 //    try {
-//     this.td = TDGraphReader.readFromURL(url);
+//     this.td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
 //    } catch (IOException e) {
 //      failed(e.getMessage());
 //    }

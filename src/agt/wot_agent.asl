@@ -2,16 +2,13 @@
 
 td_url("http://andreiciortea.ro/tds/forkliftRobot.ttl").
 
-operation("http://example.org/CarryFromTo").
-
-
 /* Initial goals */
 
 !start.
 
 /* Plans */
 
-+!start : td_url(Url) & operation(OpType) <- 
++!start : td_url(Url) <- 
   .print("hello world.");
   // To also execute the requests, remove the second init parameter (dryRun flag).
   // When dryRun is set to true, the requests are printed (but not executed).
