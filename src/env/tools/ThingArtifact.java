@@ -250,17 +250,21 @@ public class ThingArtifact extends Artifact {
       Object payload) {
     TDHttpRequest request = new TDHttpRequest(form, operationType);
     
+    try {
     if (payload instanceof Boolean) {
       request.setPrimitivePayload(schema, (boolean) payload);
     } else if (payload instanceof Byte || payload instanceof Integer || payload instanceof Long) {
-      request.setPrimitivePayload(schema, (long) payload);
+      request.setPrimitivePayload(schema, Long.valueOf(String.valueOf(payload)));
     } else if (payload instanceof Float || payload instanceof Double) {
-      request.setPrimitivePayload(schema, (double) payload);
+      request.setPrimitivePayload(schema, Double.valueOf(String.valueOf(payload)));
     } else if (payload instanceof String) {
       request.setPrimitivePayload(schema, (String) payload);
     } else {
       failed("Unable to detect the primitive datatype of payload: " 
           + payload.getClass().getCanonicalName());
+    }
+    } catch (IllegalArgumentException e) {
+      failed(e.getMessage());
     }
     
     if (this.dryRun) {

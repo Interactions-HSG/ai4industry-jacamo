@@ -25,7 +25,7 @@ td_url("http://andreiciortea.ro/tds/forkliftRobot.ttl").
   )[artifact_name("forkliftRobot")];
   // Invoke action with nested lists (i.e., ArraySchema payload)
   .print("Invoking action with array schema payload: http://example.org/MoveTo");
-  invokeAction("http://example.org/MoveTo", [[30, 50, 70], [30, 60, 70]])[artifact_name("forkliftRobot")].
+  invokeAction("http://example.org/MoveTo", [30, 60, 70])[artifact_name("forkliftRobot")].
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
