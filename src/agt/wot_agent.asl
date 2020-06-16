@@ -12,7 +12,7 @@ td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/h
   .print("hello world.");
   // To also execute the requests, remove the second init parameter (dryRun flag).
   // When dryRun is set to true, the requests are printed (but not executed).
-  makeArtifact("forkliftRobot", "tools.ThingArtifact", [Url], ArtId);
+  makeArtifact("forkliftRobot", "tools.ThingArtifact", [Url, true], ArtId);
   .print("Artifact created!");
   // Write property of boolean type
   .print("Writing property: http://example.org/Status");
