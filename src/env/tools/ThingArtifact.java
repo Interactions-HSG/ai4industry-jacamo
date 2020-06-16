@@ -1,8 +1,11 @@
 package tools;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,69 +35,6 @@ import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
  *
  */
 public class ThingArtifact extends Artifact {
-  // Will be removed, currently used during dev:
-//  private final String test_td = "@prefix td: <https://www.w3.org/2019/wot/td#> .\n" + 
-//      "@prefix htv: <http://www.w3.org/2011/http#> .\n" + 
-//      "@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .\n" + 
-//      "@prefix dct: <http://purl.org/dc/terms/> .\n" + 
-//      "@prefix wotsec: <https://www.w3.org/2019/wot/security#> .\n" + 
-//      "@prefix js: <https://www.w3.org/2019/wot/json-schema#> .\n" + 
-//      "@prefix ex: <http://example.org/> .\n" + 
-//      "\n" + 
-//      "ex:forkliftRobot a td:Thing ; \n" + 
-//      "    dct:title \"forkliftRobot\" ;\n" + 
-//      "    td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme ] ;\n" + 
-//      "    td:hasPropertyAffordance [\n" + 
-//      "        a td:PropertyAffordance, js:BooleanSchema, ex:Status ; \n" + 
-//      "        td:hasForm [\n" + 
-//      "            hctl:hasTarget <http://example.org/forkliftRobot/busy> ; \n" + 
-//      "        ] ; \n" + 
-//      "    ] ;\n" + 
-//      "    td:hasActionAffordance [\n" + 
-//      "        a td:ActionAffordance, ex:CarryFromTo ;\n" + 
-//      "        dct:title \"carry\" ; \n" + 
-//      "        td:hasForm [\n" + 
-//      "            hctl:hasTarget <http://example.org/forkliftRobot/carry> ; \n" + 
-//      "        ] ; \n" + 
-//      "        td:hasInputSchema [ \n" + 
-//      "            a js:ObjectSchema ;\n" + 
-//      "            js:properties [ \n" + 
-//      "                a js:ArraySchema, ex:SourcePosition, ex:3DCordinates ;\n" + 
-//      "                js:propertyName \"sourcePosition\";\n" + 
-//      "                js:minItems 3 ;\n" + 
-//      "                js:maxItems 3 ;\n" + 
-//      "                js:items [\n" + 
-//      "                    a js:NumberSchema ;\n" + 
-//      "                ] ;\n" + 
-//      "            ] ;\n" + 
-//      "            js:properties [\n" + 
-//      "                a js:ArraySchema, ex:TargetPosition, ex:3DCordinates ;\n" + 
-//      "                js:propertyName \"targetPosition\";\n" + 
-//      "                js:minItems 3 ;\n" + 
-//      "                js:maxItems 3 ;\n" + 
-//      "                js:items [\n" + 
-//      "                    a js:NumberSchema ;\n" + 
-//      "                ] ;\n" + 
-//      "            ] ;\n" + 
-//      "            js:required \"sourcePosition\", \"targetPosition\" ;\n" + 
-//      "        ] ; \n" + 
-//      "    ] ;" +
-//      "    td:hasActionAffordance [\n" + 
-//      "        a td:ActionAffordance, ex:MoveTo ;\n" + 
-//      "        dct:title \"moveTo\" ; \n" + 
-//      "        td:hasForm [\n" + 
-//      "            hctl:hasTarget <http://example.org/forkliftRobot/moveTo> ; \n" + 
-//      "        ] ; \n" + 
-//      "        td:hasInputSchema [ \n" + 
-//      "            a js:ArraySchema, ex:3DCordinates ;\n" + 
-//      "            js:minItems 3 ;\n" + 
-//      "            js:maxItems 3 ;\n" + 
-//      "            js:items [\n" + 
-//      "                a js:NumberSchema ;\n" + 
-//      "            ] ;\n" + 
-//      "        ] ; " +
-//      "    ] .";
-  
   private ThingDescription td;
   private boolean dryRun;
   
@@ -105,9 +45,6 @@ public class ThingArtifact extends Artifact {
    * @param url A URL that dereferences to a W3C WoT Thing Description.
    */
   public void init(String url) {
-//    this.td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, test_td);
-    
-    // TODO: To dereference the url provided as a parameter, use the follwing codeinstead:
     try {
      this.td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
     } catch (IOException e) {
@@ -129,32 +66,38 @@ public class ThingArtifact extends Artifact {
     this.dryRun = dryRun;
   }
   
+  /**
+   * CArtAgO operation for reading a property of a Thing using a semantic model of the Thing.
+   * 
+   * @param semanticType An IRI that identifies the property type.
+   * @param output The read value. Can be a list of one or more primitives, or a nested list of
+   * primitives or arbitrary depth.
+   */
   @OPERATION
   public void readProperty(String semanticType, OpFeedbackParam<Object[]> output) {
-    Optional<TDHttpResponse> response = executePropertyRequest(semanticType, TD.readProperty, 
-        new Object[0], new Object[0]);
-    
-    if (!dryRun) {
-      if (!response.isPresent()) {
-        failed("Something went wrong with the read property request.");
-      }
-      
-      // Using numeric values here to avoid adding a dependency to the JaCaMo project
-      if (response.get().getStatusCode() == 200) {
-        Boolean[] out = { response.get().getPayloadAsBoolean() };
-        output.set(out);
-      } else {
-        failed("Status code: " + response.get().getStatusCode());
-      }
-    }
+    readProperty(semanticType, Optional.empty(), output);
+  }
+  
+  /**
+   * CArtAgO operation for reading a property of a Thing using a semantic model of the Thing.
+   * 
+   * @param semanticType An IRI that identifies the property type.
+   * @param tags A list of IRIs, used if the property is an object schema.
+   * @param output The read value. Can be a list of one or more primitives, or a nested list of
+   * primitives or arbitrary depth.
+   */
+  @OPERATION
+  public void readProperty(String semanticType, OpFeedbackParam<Object[]> tags, 
+      OpFeedbackParam<Object[]> output) {
+    readProperty(semanticType, Optional.of(tags), output);
   }
   
   /**
    * CArtAgO operation for writing a property of a Thing using a semantic model of the Thing.
    * 
-   * @param semanticType An IRI that identifies the action type.
+   * @param semanticType An IRI that identifies the property type.
    * @param tags A list of IRIs that identify parameters sent in the payload. Used for object schemas.
-   * @param payload The payload to be issued when invoking the action.
+   * @param payload The payload to be issued when writing the property.
    */
   @OPERATION
   public void writeProperty(String semanticType, Object[] tags, Object[] payload) {
@@ -163,14 +106,15 @@ public class ThingArtifact extends Artifact {
       failed("The payload used when writing a property cannot be empty.");
     }
     
-    executePropertyRequest(semanticType, TD.writeProperty, tags, payload);
+    PropertyAffordance property = getFirstPropertyOrFail(semanticType);
+    executePropertyRequest(property, TD.writeProperty, tags, payload);
   }
   
   /**
    * CArtAgO operation for writing a property of a Thing using a semantic model of the Thing.
    * 
-   * @param semanticType An IRI that identifies the action type.
-   * @param payload The payload to be issued when invoking the action.
+   * @param semanticType An IRI that identifies the property type.
+   * @param payload The payload to be issued when writing the property.
    */
   @OPERATION
   public void writeProperty(String semanticType, Object[] payload) {
@@ -227,26 +171,112 @@ public class ThingArtifact extends Artifact {
     }
   }
   
-  private Optional<TDHttpResponse> executePropertyRequest(String propSemType, String operationType, 
-      Object[] tags, Object[] payload) {
-    Optional<PropertyAffordance> property = td.getFirstPropertyBySemanticType(propSemType);
+  private void readProperty(String semanticType, Optional<OpFeedbackParam<Object[]>> tags, 
+      OpFeedbackParam<Object[]> output) {
+    PropertyAffordance property = getFirstPropertyOrFail(semanticType);
+    Optional<TDHttpResponse> response = executePropertyRequest(property, TD.readProperty, 
+        new Object[0], new Object[0]);
     
-    if (property.isPresent()) {
-      Optional<Form> form = property.get()
-          .getFirstFormForOperationType(operationType);
-      
-      if (!form.isPresent()) {
-        // Should not happen (an exception will be raised by the TD library first)
-        failed("Invalid TD: the property does not have a valid form.");
+    if (!dryRun) {
+      if (!response.isPresent()) {
+        failed("Something went wrong with the read property request.");
       }
       
-      DataSchema schema = property.get().getDataSchema();
-      
-      return executeRequest(operationType, form.get(), Optional.of(schema), tags, payload);
-    } else {
-      failed("Unknown property: " + propSemType);
-      return Optional.empty();
+      // Using numeric values here to avoid adding a dependency to the JaCaMo project
+      if (response.get().getStatusCode() == 200) {
+        readPayloadWithSchema(response.get(), property.getDataSchema(), tags, output);
+      } else {
+        failed("Status code: " + response.get().getStatusCode());
+      }
     }
+  }
+  
+  private PropertyAffordance getFirstPropertyOrFail(String semanticType) {
+    Optional<PropertyAffordance> property = td.getFirstPropertyBySemanticType(semanticType);
+    
+    if (!property.isPresent()) {
+      failed("Unknown property: " + semanticType);
+    }
+    
+    return property.get();
+  }
+  
+  // TODO: Reading payloads of type object currently works with 2 limitations:
+  // - only one semantic tag is retrieved for object properties (one that is not a data schema)
+  // - we cannot use nested objects with the current JaCa bridge
+  @SuppressWarnings("unchecked")
+  private void readPayloadWithSchema(TDHttpResponse response, DataSchema schema, 
+      Optional<OpFeedbackParam<Object[]>> tags, OpFeedbackParam<Object[]> output) {
+    
+    switch (schema.getDatatype()) {
+      case DataSchema.BOOLEAN:
+        output.set(new Boolean[] { response.getPayloadAsBoolean() });
+        break;
+      case DataSchema.STRING:
+        output.set(new String[] { response.getPayloadAsString() });
+        break;
+      case DataSchema.INTEGER:
+        output.set(new Integer[] { response.getPayloadAsInteger() });
+        break;
+      case DataSchema.NUMBER:
+        output.set(new Double[] { response.getPayloadAsDouble() });
+        break;
+      case DataSchema.OBJECT:
+        // Only consider this case if the invoked CArtAgO operation was for an object payload
+        // (i.e., a list of tags is expected).
+        if (tags.isPresent()) {
+          Map<String, Object> payload = response.getPayloadAsObject((ObjectSchema) schema);
+          List<String> tagList = new ArrayList<String>();
+          List<Object> data = new ArrayList<Object>();
+          
+          for (String tag : payload.keySet()) {
+            tagList.add(tag);
+            Object value = payload.get(tag);
+            if (value instanceof Collection<?>) {
+              data.add(nestedListsToArrays((Collection<Object>) value));
+            } else {
+              data.add(value);
+            }
+          }
+          
+          tags.get().set(tagList.toArray());
+          output.set(data.toArray());
+        }
+        break;
+      case DataSchema.ARRAY:
+        List<Object> payload = response.getPayloadAsArray((ArraySchema) schema);
+        output.set(nestedListsToArrays(payload));
+        break;
+      default:
+        break;
+    }
+  }
+  
+  @SuppressWarnings("unchecked")
+  private Object[] nestedListsToArrays(Collection<Object> data) {
+    Object[] out = data.toArray();
+    
+    for (int i = 0; i < out.length; i ++) {
+      if (out[i] instanceof Collection<?>) {
+        out[i] = nestedListsToArrays((Collection<Object>) out[i]);
+      }
+    }
+    
+    return out;
+  }
+  
+  private Optional<TDHttpResponse> executePropertyRequest(PropertyAffordance property, 
+    String operationType, Object[] tags, Object[] payload) {
+    Optional<Form> form = property.getFirstFormForOperationType(operationType);
+    
+    if (!form.isPresent()) {
+      // Should not happen (an exception will be raised by the TD library first)
+      failed("Invalid TD: the property does not have a valid form.");
+    }
+    
+    DataSchema schema = property.getDataSchema();
+    
+    return executeRequest(operationType, form.get(), Optional.of(schema), tags, payload);
   }
   
   private Optional<TDHttpResponse> executeRequest(String operationType, Form form, 
