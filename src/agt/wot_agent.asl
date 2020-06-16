@@ -1,6 +1,6 @@
 /* Initial beliefs and rules */
 
-td_url("http://andreiciortea.ro/tds/forkliftRobot.ttl").
+td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/http-client/samples/forkliftRobot.ttl").
 
 /* Initial goals */
 
@@ -17,6 +17,9 @@ td_url("http://andreiciortea.ro/tds/forkliftRobot.ttl").
   // Write property
   .print("Writing property: http://example.org/Status");
   writeProperty("http://example.org/Status", [true])[artifact_name("forkliftRobot")];
+  .print("Reading property: http://example.org/Status");
+  readProperty("http://example.org/Status", PropValue)[artifact_name("forkliftRobot")];
+  .println("Read value (if dry run, then <no-value>): ", PropValue);
   // Invoke action with tagged nested lists (i.e., ObjectSchema payload)
   .print("Invoking action with object schema payload: http://example.org/CarryFromTo");
   invokeAction("http://example.org/CarryFromTo", 

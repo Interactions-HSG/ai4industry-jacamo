@@ -1,5 +1,6 @@
 package tools;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,12 +8,14 @@ import java.util.Optional;
 
 import cartago.Artifact;
 import cartago.OPERATION;
+import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
+import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
@@ -30,67 +33,67 @@ import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
  */
 public class ThingArtifact extends Artifact {
   // Will be removed, currently used during dev:
-  private final String test_td = "@prefix td: <https://www.w3.org/2019/wot/td#> .\n" + 
-      "@prefix htv: <http://www.w3.org/2011/http#> .\n" + 
-      "@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .\n" + 
-      "@prefix dct: <http://purl.org/dc/terms/> .\n" + 
-      "@prefix wotsec: <https://www.w3.org/2019/wot/security#> .\n" + 
-      "@prefix js: <https://www.w3.org/2019/wot/json-schema#> .\n" + 
-      "@prefix ex: <http://example.org/> .\n" + 
-      "\n" + 
-      "ex:forkliftRobot a td:Thing ; \n" + 
-      "    dct:title \"forkliftRobot\" ;\n" + 
-      "    td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme ] ;\n" + 
-      "    td:hasPropertyAffordance [\n" + 
-      "        a td:PropertyAffordance, js:BooleanSchema, ex:Status ; \n" + 
-      "        td:hasForm [\n" + 
-      "            hctl:hasTarget <http://example.org/forkliftRobot/busy> ; \n" + 
-      "        ] ; \n" + 
-      "    ] ;\n" + 
-      "    td:hasActionAffordance [\n" + 
-      "        a td:ActionAffordance, ex:CarryFromTo ;\n" + 
-      "        dct:title \"carry\" ; \n" + 
-      "        td:hasForm [\n" + 
-      "            hctl:hasTarget <http://example.org/forkliftRobot/carry> ; \n" + 
-      "        ] ; \n" + 
-      "        td:hasInputSchema [ \n" + 
-      "            a js:ObjectSchema ;\n" + 
-      "            js:properties [ \n" + 
-      "                a js:ArraySchema, ex:SourcePosition, ex:3DCordinates ;\n" + 
-      "                js:propertyName \"sourcePosition\";\n" + 
-      "                js:minItems 3 ;\n" + 
-      "                js:maxItems 3 ;\n" + 
-      "                js:items [\n" + 
-      "                    a js:NumberSchema ;\n" + 
-      "                ] ;\n" + 
-      "            ] ;\n" + 
-      "            js:properties [\n" + 
-      "                a js:ArraySchema, ex:TargetPosition, ex:3DCordinates ;\n" + 
-      "                js:propertyName \"targetPosition\";\n" + 
-      "                js:minItems 3 ;\n" + 
-      "                js:maxItems 3 ;\n" + 
-      "                js:items [\n" + 
-      "                    a js:NumberSchema ;\n" + 
-      "                ] ;\n" + 
-      "            ] ;\n" + 
-      "            js:required \"sourcePosition\", \"targetPosition\" ;\n" + 
-      "        ] ; \n" + 
-      "    ] ;" +
-      "    td:hasActionAffordance [\n" + 
-      "        a td:ActionAffordance, ex:MoveTo ;\n" + 
-      "        dct:title \"moveTo\" ; \n" + 
-      "        td:hasForm [\n" + 
-      "            hctl:hasTarget <http://example.org/forkliftRobot/moveTo> ; \n" + 
-      "        ] ; \n" + 
-      "        td:hasInputSchema [ \n" + 
-      "            a js:ArraySchema, ex:3DCordinates ;\n" + 
-      "            js:minItems 3 ;\n" + 
-      "            js:maxItems 3 ;\n" + 
-      "            js:items [\n" + 
-      "                a js:NumberSchema ;\n" + 
-      "            ] ;\n" + 
-      "        ] ; " +
-      "    ] .";
+//  private final String test_td = "@prefix td: <https://www.w3.org/2019/wot/td#> .\n" + 
+//      "@prefix htv: <http://www.w3.org/2011/http#> .\n" + 
+//      "@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .\n" + 
+//      "@prefix dct: <http://purl.org/dc/terms/> .\n" + 
+//      "@prefix wotsec: <https://www.w3.org/2019/wot/security#> .\n" + 
+//      "@prefix js: <https://www.w3.org/2019/wot/json-schema#> .\n" + 
+//      "@prefix ex: <http://example.org/> .\n" + 
+//      "\n" + 
+//      "ex:forkliftRobot a td:Thing ; \n" + 
+//      "    dct:title \"forkliftRobot\" ;\n" + 
+//      "    td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme ] ;\n" + 
+//      "    td:hasPropertyAffordance [\n" + 
+//      "        a td:PropertyAffordance, js:BooleanSchema, ex:Status ; \n" + 
+//      "        td:hasForm [\n" + 
+//      "            hctl:hasTarget <http://example.org/forkliftRobot/busy> ; \n" + 
+//      "        ] ; \n" + 
+//      "    ] ;\n" + 
+//      "    td:hasActionAffordance [\n" + 
+//      "        a td:ActionAffordance, ex:CarryFromTo ;\n" + 
+//      "        dct:title \"carry\" ; \n" + 
+//      "        td:hasForm [\n" + 
+//      "            hctl:hasTarget <http://example.org/forkliftRobot/carry> ; \n" + 
+//      "        ] ; \n" + 
+//      "        td:hasInputSchema [ \n" + 
+//      "            a js:ObjectSchema ;\n" + 
+//      "            js:properties [ \n" + 
+//      "                a js:ArraySchema, ex:SourcePosition, ex:3DCordinates ;\n" + 
+//      "                js:propertyName \"sourcePosition\";\n" + 
+//      "                js:minItems 3 ;\n" + 
+//      "                js:maxItems 3 ;\n" + 
+//      "                js:items [\n" + 
+//      "                    a js:NumberSchema ;\n" + 
+//      "                ] ;\n" + 
+//      "            ] ;\n" + 
+//      "            js:properties [\n" + 
+//      "                a js:ArraySchema, ex:TargetPosition, ex:3DCordinates ;\n" + 
+//      "                js:propertyName \"targetPosition\";\n" + 
+//      "                js:minItems 3 ;\n" + 
+//      "                js:maxItems 3 ;\n" + 
+//      "                js:items [\n" + 
+//      "                    a js:NumberSchema ;\n" + 
+//      "                ] ;\n" + 
+//      "            ] ;\n" + 
+//      "            js:required \"sourcePosition\", \"targetPosition\" ;\n" + 
+//      "        ] ; \n" + 
+//      "    ] ;" +
+//      "    td:hasActionAffordance [\n" + 
+//      "        a td:ActionAffordance, ex:MoveTo ;\n" + 
+//      "        dct:title \"moveTo\" ; \n" + 
+//      "        td:hasForm [\n" + 
+//      "            hctl:hasTarget <http://example.org/forkliftRobot/moveTo> ; \n" + 
+//      "        ] ; \n" + 
+//      "        td:hasInputSchema [ \n" + 
+//      "            a js:ArraySchema, ex:3DCordinates ;\n" + 
+//      "            js:minItems 3 ;\n" + 
+//      "            js:maxItems 3 ;\n" + 
+//      "            js:items [\n" + 
+//      "                a js:NumberSchema ;\n" + 
+//      "            ] ;\n" + 
+//      "        ] ; " +
+//      "    ] .";
   
   private ThingDescription td;
   private boolean dryRun;
@@ -102,14 +105,14 @@ public class ThingArtifact extends Artifact {
    * @param url A URL that dereferences to a W3C WoT Thing Description.
    */
   public void init(String url) {
-    this.td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, test_td);
+//    this.td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, test_td);
     
     // TODO: To dereference the url provided as a parameter, use the follwing codeinstead:
-//    try {
-//     this.td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
-//    } catch (IOException e) {
-//      failed(e.getMessage());
-//    }
+    try {
+     this.td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
+    } catch (IOException e) {
+      failed(e.getMessage());
+    }
     
     this.dryRun = false;
   }
@@ -126,6 +129,26 @@ public class ThingArtifact extends Artifact {
     this.dryRun = dryRun;
   }
   
+  @OPERATION
+  public void readProperty(String semanticType, OpFeedbackParam<Object[]> output) {
+    Optional<TDHttpResponse> response = executePropertyRequest(semanticType, TD.readProperty, 
+        new Object[0], new Object[0]);
+    
+    if (!dryRun) {
+      if (!response.isPresent()) {
+        failed("Something went wrong with the read property request.");
+      }
+      
+      // Using numeric values here to avoid adding a dependency to the JaCaMo project
+      if (response.get().getStatusCode() == 200) {
+        Boolean[] out = { response.get().getPayloadAsBoolean() };
+        output.set(out);
+      } else {
+        failed("Status code: " + response.get().getStatusCode());
+      }
+    }
+  }
+  
   /**
    * CArtAgO operation for writing a property of a Thing using a semantic model of the Thing.
    * 
@@ -140,23 +163,7 @@ public class ThingArtifact extends Artifact {
       failed("The payload used when writing a property cannot be empty.");
     }
     
-    Optional<PropertyAffordance> property = td.getFirstPropertyBySemanticType(semanticType);
-    
-    if (property.isPresent()) {
-      Optional<Form> form = property.get()
-          .getFirstFormForOperationType(TD.writeProperty);
-      
-      if (!form.isPresent()) {
-        // Should not happen (an exception will be raised by the TD library first)
-        failed("Invalid TD: the property does not have a valid form.");
-      }
-      
-      DataSchema schema = property.get().getDataSchema();
-      
-      executeRequest(TD.writeProperty, form.get(), Optional.of(schema), tags, payload);
-    } else {
-      failed("Unknown property: " + semanticType);
-    }
+    executePropertyRequest(semanticType, TD.writeProperty, tags, payload);
   }
   
   /**
@@ -220,18 +227,41 @@ public class ThingArtifact extends Artifact {
     }
   }
   
-  private void executeRequest(String operationType, Form form, Optional<DataSchema> schema, 
+  private Optional<TDHttpResponse> executePropertyRequest(String propSemType, String operationType, 
       Object[] tags, Object[] payload) {
-    if (schema.isPresent()) {
+    Optional<PropertyAffordance> property = td.getFirstPropertyBySemanticType(propSemType);
+    
+    if (property.isPresent()) {
+      Optional<Form> form = property.get()
+          .getFirstFormForOperationType(operationType);
+      
+      if (!form.isPresent()) {
+        // Should not happen (an exception will be raised by the TD library first)
+        failed("Invalid TD: the property does not have a valid form.");
+      }
+      
+      DataSchema schema = property.get().getDataSchema();
+      
+      return executeRequest(operationType, form.get(), Optional.of(schema), tags, payload);
+    } else {
+      failed("Unknown property: " + propSemType);
+      return Optional.empty();
+    }
+  }
+  
+  private Optional<TDHttpResponse> executeRequest(String operationType, Form form, 
+      Optional<DataSchema> schema, Object[] tags, Object[] payload) {
+    if (schema.isPresent() && payload.length > 0) {
       // Request with payload
       if (tags.length > 0) {
-        executeRequestObjectPayload(operationType, form, schema.get(), tags, payload);
+        return executeRequestObjectPayload(operationType, form, schema.get(), tags, payload);
       } else if (payload.length == 1 && !(payload[0] instanceof Object[])) {
-        executeRequestPrimitivePayload(operationType, form, schema.get(), payload[0]);
+        return executeRequestPrimitivePayload(operationType, form, schema.get(), payload[0]);
       } else if (payload.length >= 1) {
-        executeRequestArrayPayload(operationType, form, schema.get(), payload);
+        return executeRequestArrayPayload(operationType, form, schema.get(), payload);
       } else {
         failed("Could not detect the type of payload (primitive, object, or array).");
+        return Optional.empty();
       }
     } else {
       // Request without payload
@@ -239,15 +269,16 @@ public class ThingArtifact extends Artifact {
       
       if (this.dryRun) {
         log(request.toString());
+        return Optional.empty();
       } else {
-        request.execute();
+        return issueRequest(request);
       }
     }
   }
   
   /* Request with primitive payload: Boolean, Number, or String */
-  private void executeRequestPrimitivePayload(String operationType, Form form, DataSchema schema, 
-      Object payload) {
+  private Optional<TDHttpResponse> executeRequestPrimitivePayload(String operationType, Form form, 
+      DataSchema schema, Object payload) {
     TDHttpRequest request = new TDHttpRequest(form, operationType);
     
     try {
@@ -269,14 +300,15 @@ public class ThingArtifact extends Artifact {
     
     if (this.dryRun) {
       log(request.toString());
+      return Optional.empty();
     } else {
-      request.execute();
+      return issueRequest(request);
     }
   }
   
   /* Request with an ObjectSchema payload */
-  private void executeRequestObjectPayload(String operationType, Form form, DataSchema schema, 
-      Object[] tags, Object[] payload) {
+  private Optional<TDHttpResponse> executeRequestObjectPayload(String operationType, Form form, 
+      DataSchema schema, Object[] tags, Object[] payload) {
     if (schema.getDatatype() != DataSchema.OBJECT) {
       failed("TD mismatch: illegal arguments, this affordance uses a data schema of type " 
           + schema.getDatatype());
@@ -296,14 +328,15 @@ public class ThingArtifact extends Artifact {
     
     if (this.dryRun) {
       log(request.toString());
+      return Optional.empty();
     } else {
-      request.execute();
+      return issueRequest(request);
     }
   }
   
   /* Request with an ArraySchema payload */
-  private void executeRequestArrayPayload(String operationType, Form form, DataSchema schema, 
-      Object[] payload) {
+  private Optional<TDHttpResponse> executeRequestArrayPayload(String operationType, Form form, 
+      DataSchema schema, Object[] payload) {
     if (schema.getDatatype() != DataSchema.ARRAY) {
       failed("TD mismatch: illegal arguments, this affordance uses a data schema of type " 
           + schema.getDatatype());
@@ -314,8 +347,19 @@ public class ThingArtifact extends Artifact {
     
     if (this.dryRun) {
       log(request.toString());
+      return Optional.empty();
     } else {
-      request.execute();
+      return issueRequest(request);
     }
+  }
+  
+  private Optional<TDHttpResponse> issueRequest(TDHttpRequest request) {
+    try {
+      return Optional.of(request.execute());
+    } catch (IOException e) {
+      failed(e.getMessage());
+    }
+    
+    return Optional.empty();
   }
 }
