@@ -32,8 +32,8 @@ When developing your application, it might be useful to mock your HTTP requests.
 
 ```
 docker run -v "$(pwd)"/mockserver/mockserver.json:/tmp/mockserver/mockserver.json \
--e MOCKSERVER_INITIALIZATION_JSON_PATH=/tmp/mockserver/mockserver.json -d --rm --name mockserver \
--p 1080:1080 mockserver/mockserver
+-e MOCKSERVER_INITIALIZATION_JSON_PATH=/tmp/mockserver/mockserver.json \
+-d --rm --name mockserver -p 1080:1080 mockserver/mockserver
 ```
 
 The above command will run the Docker container in the background and will print the container ID. To stop the container: `docker stop CONTAINER_ID` 
