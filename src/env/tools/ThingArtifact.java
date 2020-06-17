@@ -107,7 +107,12 @@ public class ThingArtifact extends Artifact {
     }
     
     PropertyAffordance property = getFirstPropertyOrFail(semanticType);
-    executePropertyRequest(property, TD.writeProperty, tags, payload);
+    Optional<TDHttpResponse> response = executePropertyRequest(property, TD.writeProperty, tags, 
+        payload);
+    
+    if (response.isPresent() && response.get().getStatusCode() != 200) {
+      failed("Status code: " + response.get().getStatusCode());
+    }
   }
   
   /**
@@ -147,7 +152,12 @@ public class ThingArtifact extends Artifact {
         failed("This type of action does not take any input: " + semanticType);
       }
       
-      executeRequest(TD.invokeAction, form.get(), inputSchema, tags, payload);
+      Optional<TDHttpResponse> response = executeRequest(TD.invokeAction, form.get(), inputSchema, 
+          tags, payload);
+      
+      if (response.isPresent() && response.get().getStatusCode() != 200) {
+        failed("Status code: " + response.get().getStatusCode());
+      }
     } else {
       failed("Unknown action: " + semanticType);
     }
