@@ -1,5 +1,6 @@
 /* Initial beliefs and rules */
 
+api_key("test-token").
 td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/http-client/samples/forkliftRobot.ttl").
 
 /* Initial goals */
@@ -35,6 +36,10 @@ td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/h
     ["http://example.org/SourcePosition", "http://example.org/TargetPosition"],
     [[30, 50, 70], [30, 60, 70]]
   )[artifact_name("forkliftRobot")];
+  // Send an authenticated request
+  .print("Setting test API token");
+  ?api_key(Token);
+  setAPIKey(Token)[artifact_name("forkliftRobot")];
   // Invoke action with nested lists (i.e., ArraySchema payload)
   .print("Invoking action with array schema payload: http://example.org/MoveTo");
   invokeAction("http://example.org/MoveTo", [30, 60, 70])[artifact_name("forkliftRobot")].

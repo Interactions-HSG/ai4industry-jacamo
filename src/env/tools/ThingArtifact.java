@@ -23,7 +23,10 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
+import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
+import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
+import ch.unisg.ics.interactions.wot.td.vocabularies.WoTSec;
 
 /**
  * A CArtAgO artifact that can interpret a W3C WoT Thing Description (TD) and exposes the affordances 
@@ -36,6 +39,7 @@ import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
  */
 public class ThingArtifact extends Artifact {
   private ThingDescription td;
+  private Optional<String> apiKey;
   private boolean dryRun;
   
   /**
@@ -46,11 +50,16 @@ public class ThingArtifact extends Artifact {
    */
   public void init(String url) {
     try {
-     this.td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
+     td = TDGraphReader.readFromURL(TDFormat.RDF_TURTLE, url);
+     
+     for (SecurityScheme scheme : td.getSecuritySchemes()) {
+       defineObsProperty("securityScheme", scheme.getSchemaType());
+     }
     } catch (IOException e) {
       failed(e.getMessage());
     }
     
+    this.apiKey = Optional.empty();
     this.dryRun = false;
   }
   
@@ -174,6 +183,18 @@ public class ThingArtifact extends Artifact {
     invokeAction(semanticType, new Object[0], payload);
   }
   
+  /**
+   * CArtAgO operation that sets an authentication token (used with APIKeySecurityScheme).
+   * 
+   * @param token The authentication token.
+   */
+  @OPERATION
+  public void setAPIKey(String token) {
+    if (token != null && !token.isEmpty()) {
+      this.apiKey = Optional.of(token);
+    }
+  }
+  
   private void validateParameters(String semanticType, Object[] tags, Object[] payload) {
     // TODO: validate IRIs for semanticType and tags
     if (tags.length > 0 && tags.length != payload.length) {
@@ -212,8 +233,9 @@ public class ThingArtifact extends Artifact {
   }
   
   // TODO: Reading payloads of type object currently works with 2 limitations:
-  // - only one semantic tag is retrieved for object properties (one that is not a data schema)
-  // - we cannot use nested objects with the current JaCa bridge
+  // - only the first semantic tag is retrieved for object properties (one that is not a data schema)
+  // - we cannot use nested objects with the current ThingArtifact API (needs a more elaborated
+  // JaCa - WoT bridge)
   @SuppressWarnings("unchecked")
   private void readPayloadWithSchema(TDHttpResponse response, DataSchema schema, 
       Optional<OpFeedbackParam<Object[]>> tags, OpFeedbackParam<Object[]> output) {
@@ -306,13 +328,7 @@ public class ThingArtifact extends Artifact {
     } else {
       // Request without payload
       TDHttpRequest request = new TDHttpRequest(form, operationType);
-      
-      if (this.dryRun) {
-        log(request.toString());
-        return Optional.empty();
-      } else {
-        return issueRequest(request);
-      }
+      return issueRequest(request);
     }
   }
   
@@ -338,12 +354,7 @@ public class ThingArtifact extends Artifact {
       failed(e.getMessage());
     }
     
-    if (this.dryRun) {
-      log(request.toString());
-      return Optional.empty();
-    } else {
-      return issueRequest(request);
-    }
+    return issueRequest(request);
   }
   
   /* Request with an ObjectSchema payload */
@@ -366,12 +377,7 @@ public class ThingArtifact extends Artifact {
     
     request.setObjectPayload((ObjectSchema) schema, requestPayload);
     
-    if (this.dryRun) {
-      log(request.toString());
-      return Optional.empty();
-    } else {
-      return issueRequest(request);
-    }
+    return issueRequest(request);
   }
   
   /* Request with an ArraySchema payload */
@@ -385,19 +391,26 @@ public class ThingArtifact extends Artifact {
     TDHttpRequest request = new TDHttpRequest(form, operationType)
         .setArrayPayload((ArraySchema) schema, Arrays.asList(payload));
     
+    return issueRequest(request);
+  }
+  
+  private Optional<TDHttpResponse> issueRequest(TDHttpRequest request) {
+    Optional<SecurityScheme> scheme = td.getSecuritySchemeByType(WoTSec.APIKeySecurityScheme);
+    
+    if (scheme.isPresent() && apiKey.isPresent()) {
+      request.setAPIKey((APIKeySecurityScheme) scheme.get(), apiKey.get());
+    }
+    
     if (this.dryRun) {
       log(request.toString());
       return Optional.empty();
     } else {
-      return issueRequest(request);
-    }
-  }
-  
-  private Optional<TDHttpResponse> issueRequest(TDHttpRequest request) {
-    try {
-      return Optional.of(request.execute());
-    } catch (IOException e) {
-      failed(e.getMessage());
+      log(request.toString());
+      try {
+        return Optional.of(request.execute());
+      } catch (IOException e) {
+        failed(e.getMessage());
+      }
     }
     
     return Optional.empty();
