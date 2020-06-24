@@ -195,8 +195,55 @@ public class ThingArtifact extends Artifact {
     }
   }
   
+  /* Set a primitive payload. */
+  TDHttpRequest setPrimitivePayload(TDHttpRequest request, DataSchema schema, Object payload) {
+    try {
+      if (payload instanceof Boolean) {
+        // Matches to TD BooleanSchema
+        request.setPrimitivePayload(schema, (boolean) payload);
+      } else if (payload instanceof Byte || payload instanceof Integer || payload instanceof Long) {
+        // Matches to TD IntegerSchema
+        request.setPrimitivePayload(schema, Long.valueOf(String.valueOf(payload)));
+      } else if (payload instanceof Float || payload instanceof Double) {
+        // Matches to TD NumberSchema
+        request.setPrimitivePayload(schema, Double.valueOf(String.valueOf(payload)));
+      } else if (payload instanceof String) {
+        // Matches to TD StringSchema
+        request.setPrimitivePayload(schema, (String) payload);
+      } else {
+        failed("Unable to detect the primitive datatype of payload: " 
+            + payload.getClass().getCanonicalName());
+      }
+    } catch (IllegalArgumentException e) {
+      failed(e.getMessage());
+    }
+    
+    return request;
+  }
+  
+  /* Set a TD ObjectSchema payload */
+  TDHttpRequest setObjectPayload(TDHttpRequest request, DataSchema schema, Object[] tags, 
+      Object[] payload) {
+    Map<String, Object> requestPayload = new HashMap<String, Object>();
+    
+    for (int i = 0; i < tags.length; i ++) {
+      if (tags[i] instanceof String) {
+        requestPayload.put((String) tags[i], payload[i]);
+      }
+    }
+    
+    request.setObjectPayload((ObjectSchema) schema, requestPayload);
+    
+    return request;
+  }
+  
+  /* Set a TD ArraySchema payload */
+  TDHttpRequest setArrayPayload(TDHttpRequest request, DataSchema schema, Object[] payload) {
+    request.setArrayPayload((ArraySchema) schema, Arrays.asList(payload));
+    return request;
+  }
+  
   private void validateParameters(String semanticType, Object[] tags, Object[] payload) {
-    // TODO: validate IRIs for semanticType and tags
     if (tags.length > 0 && tags.length != payload.length) {
       failed("Illegal arguments: the lists of tags and action parameters should have equal length.");
     }
@@ -285,7 +332,7 @@ public class ThingArtifact extends Artifact {
   }
   
   @SuppressWarnings("unchecked")
-  private Object[] nestedListsToArrays(Collection<Object> data) {
+  Object[] nestedListsToArrays(Collection<Object> data) {
     Object[] out = data.toArray();
     
     for (int i = 0; i < out.length; i ++) {
@@ -332,32 +379,14 @@ public class ThingArtifact extends Artifact {
     }
   }
   
-  /* Request with primitive payload: Boolean, Number, or String */
   private Optional<TDHttpResponse> executeRequestPrimitivePayload(String operationType, Form form, 
       DataSchema schema, Object payload) {
     TDHttpRequest request = new TDHttpRequest(form, operationType);
-    
-    try {
-    if (payload instanceof Boolean) {
-      request.setPrimitivePayload(schema, (boolean) payload);
-    } else if (payload instanceof Byte || payload instanceof Integer || payload instanceof Long) {
-      request.setPrimitivePayload(schema, Long.valueOf(String.valueOf(payload)));
-    } else if (payload instanceof Float || payload instanceof Double) {
-      request.setPrimitivePayload(schema, Double.valueOf(String.valueOf(payload)));
-    } else if (payload instanceof String) {
-      request.setPrimitivePayload(schema, (String) payload);
-    } else {
-      failed("Unable to detect the primitive datatype of payload: " 
-          + payload.getClass().getCanonicalName());
-    }
-    } catch (IllegalArgumentException e) {
-      failed(e.getMessage());
-    }
+    request = setPrimitivePayload(request, schema, payload);
     
     return issueRequest(request);
   }
   
-  /* Request with an ObjectSchema payload */
   private Optional<TDHttpResponse> executeRequestObjectPayload(String operationType, Form form, 
       DataSchema schema, Object[] tags, Object[] payload) {
     if (schema.getDatatype() != DataSchema.OBJECT) {
@@ -366,21 +395,11 @@ public class ThingArtifact extends Artifact {
     }
     
     TDHttpRequest request = new TDHttpRequest(form, operationType);
-    
-    Map<String, Object> requestPayload = new HashMap<String, Object>();
-    
-    for (int i = 0; i < tags.length; i ++) {
-      if (tags[i] instanceof String) {
-        requestPayload.put((String) tags[i], payload[i]);
-      }
-    }
-    
-    request.setObjectPayload((ObjectSchema) schema, requestPayload);
+    request = setObjectPayload(request, schema, tags, payload);
     
     return issueRequest(request);
   }
   
-  /* Request with an ArraySchema payload */
   private Optional<TDHttpResponse> executeRequestArrayPayload(String operationType, Form form, 
       DataSchema schema, Object[] payload) {
     if (schema.getDatatype() != DataSchema.ARRAY) {
@@ -388,8 +407,8 @@ public class ThingArtifact extends Artifact {
           + schema.getDatatype());
     }
     
-    TDHttpRequest request = new TDHttpRequest(form, operationType)
-        .setArrayPayload((ArraySchema) schema, Arrays.asList(payload));
+    TDHttpRequest request = new TDHttpRequest(form, operationType);
+    request = setArrayPayload(request, schema, payload);
     
     return issueRequest(request);
   }
