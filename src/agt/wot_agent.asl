@@ -1,7 +1,10 @@
 /* Initial beliefs and rules */
 
-api_key("test-token").
-td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/http-client/samples/forkliftRobot.ttl").
+api_key_F("test-token").
+td_url_F("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/http-client/samples/forkliftRobot.ttl").
+
+api_key_A("test-token").
+td_url_A("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/phantomx/samples/phantomXRobotArm.ttl").
 
 /* Initial goals */
 
@@ -9,12 +12,16 @@ td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/h
 
 /* Plans */
 
-+!start : td_url(Url) <- 
++!start : td_url_F(UrlF) & td_url_A(UrlA) <- 
   .print("hello world.");
   // To also execute the requests, remove the second init parameter (dryRun flag).
   // When dryRun is set to true, the requests are printed (but not executed).
-  makeArtifact("forkliftRobot", "tools.ThingArtifact", [Url, true], ArtId);
-  .print("Artifact created!");
+  makeArtifact("forkliftRobot", "tools.ThingArtifact", [UrlF, true], ArtIdF);
+  .print("Forklift artifact created!");
+  makeArtifact("armRobot", "tools.ThingArtifact", [UrlA, false], ArtIdA);
+  .print("Arm robot artifact created!");
+   
+  // Requests to forklift artifact
   // Write property of boolean type
   .print("Writing property: http://example.org/Status");
   writeProperty("http://example.org/Status", [true])[artifact_name("forkliftRobot")];
@@ -38,11 +45,17 @@ td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/h
   )[artifact_name("forkliftRobot")];
   // Send an authenticated request
   .print("Setting test API token");
-  ?api_key(Token);
-  setAPIKey(Token)[artifact_name("forkliftRobot")];
+  ?api_key_F(TokenF);
+  setAPIKey(TokenF)[artifact_name("forkliftRobot")];
   // Invoke action with nested lists (i.e., ArraySchema payload)
   .print("Invoking action with array schema payload: http://example.org/MoveTo");
-  invokeAction("http://example.org/MoveTo", [30, 60, 70])[artifact_name("forkliftRobot")].
+  invokeAction("http://example.org/MoveTo", [30, 60, 70])[artifact_name("forkliftRobot")];
+
+  // Requests to arm robot artifact
+  // Send authenticated requests
+  .print("Setting API token");
+  ?api_key_A(TokenA);
+  setAPIKey(TokenA)[artifact_name("armRobot")].
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
