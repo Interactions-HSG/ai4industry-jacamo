@@ -1,8 +1,10 @@
 /* Initial beliefs and rules */
 
-api_key("ee70edc576a65494d0c929876c516381").
+//Please register here for using the Phantom X Robot: https://app.swaggerhub.com/apis-docs/iomz/leubot/1.2#/user/addUser
+api_key("place-API-key-here").
 td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/phantomx/samples/phantomXRobotArm.ttl").
 
+//Check the default, lower and upper limits of the PhantomX joint parameters: https://github.com/Interactions-HSG/leubot
 sourceAngle(512). // ~180 degrees angle
 targetAngle(256). // ~90 degrees angle
 
