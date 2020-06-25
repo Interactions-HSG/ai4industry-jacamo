@@ -164,7 +164,7 @@ public class ThingArtifact extends Artifact {
       Optional<TDHttpResponse> response = executeRequest(TD.invokeAction, form.get(), inputSchema, 
           tags, payload);
       
-      if (response.isPresent() && response.get().getStatusCode() != 200) {
+      if (response.isPresent() && response.get().getStatusCode() != 200 && response.get().getStatusCode() != 202) {
         failed("Status code: " + response.get().getStatusCode());
       }
     } else {
