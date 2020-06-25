@@ -16,6 +16,7 @@ mas ai4industry_jacamo {
 
     agent sample_agent
     agent wot_agent
-    
+    agent operator_agent
+
 }
 
