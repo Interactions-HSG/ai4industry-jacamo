@@ -1,7 +1,7 @@
 /* Initial beliefs and rules */
 
 //Please register here for using the Phantom X Robot: https://app.swaggerhub.com/apis-docs/iomz/leubot/1.2#/user/addUser
-api_key("place-API-key-here").
+api_key("place-API-token-here").
 td_url("https://raw.githubusercontent.com/Interactions-HSG/wot-td-java/feature/phantomx/samples/phantomXRobotArm.ttl").
 
 //Check the default, lower and upper limits of the PhantomX joint parameters: https://github.com/Interactions-HSG/leubot
@@ -59,6 +59,7 @@ targetAngle(256). // ~90 degrees angle
   .print("Set gripper to 400");
   invokeAction("http://example.org/SetShoulder", ["https://www.w3.org/2019/wot/json-schema#IntegerSchema"], [400])[artifact_name("armRobot")];
   !interval;
+  invokeAction("http://example.org/Reset", [])[artifact_name("armRobot")];
 
   readProperty("http://example.org/Posture", Types , Values)[artifact_name("armRobot")];
   .print(Values).
