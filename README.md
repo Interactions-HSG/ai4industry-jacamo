@@ -37,7 +37,7 @@ The `ThingArtifact` takes two initialization parameters:
 The `ThingArtifact` can use an [APIKeySecurityScheme](https://www.w3.org/TR/wot-thing-description/#apikeysecurityscheme) for authenticating HTTP requests. The API token can be set via the `setAPIKey` operation:
 
 ```
-setAPIKey(Token)[artifact_name("armRobot")];
+setAPIKey(Token)[artifact_name("forkliftRobot")];
 ```
 
 The `ThingArtifact` provides agents with 3 additional CArtAgO operations: `readProperty`, `writeProperty`, and `invokeAction`, which correspond to operation types defined by the W3C WoT TD recommendation.
